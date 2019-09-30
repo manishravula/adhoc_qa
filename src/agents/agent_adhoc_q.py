@@ -16,6 +16,8 @@ from adhoc_utils import Knowledge, inference_engine
 logger = logging.getLogger('aamas')
 logger.setLevel(global_defs.debug_level)
 
+ORIGIN = global_defs.origin
+
 
 class agent_adhoc(Agent):
     def __init__(self,pos,tp=-2):
@@ -55,18 +57,22 @@ class agent_adhoc(Agent):
           - Else, go to get the tool first. 
         """
         if obs.timestep == 0:
-            #If it's the first timestep, we have no clue.
+            #If it's the first timestep, we have no clue. Since we don't even know if we are going to ask questions in the
+            #future, we go ahead and init the inference engine for future use.
             self.p_obs = copy.deepcopy(obs)
             self.tracking_stations = self.get_remaining_stations(obs)
             self.inference_engine = inference_engine(self.tracking_agent,self.tracking_stations)
+            #And set the knowledge source to inference so the next step we know where to look for in the upcoming step.
+            self.knowledge.source[0] = ORIGIN.Inference
 
+            #And pick a target station at random since we have to move forward.
             target_station = np.random.choice(self.tracking_stations) #pick a station at random.
 
         else:
             curr_k_id = self.knowledge.get_current_job_station_id()
-            #Checking what knowledge we have.
-            if (self.knowledge.source[curr_k_id]==Knowledge.origin.Answer):
 
+            #Checking what knowledge we have.
+            if (self.knowledge.source[curr_k_id]==ORIGIN.Answer):
                 #Then we simply work on the station because we have an answer telling us that that's the station to work on.
                 target_station = self.knowledge.station_order[curr_k_id]
 
@@ -76,7 +82,7 @@ class agent_adhoc(Agent):
                 self.inference_engine = inference_engine(self.tracking_agent,self.tracking_stations)
                 target_station = np.random.choice(self.tracking_stations)
 
-            elif (self.knowledge.source[curr_k_id]==Knowledge.origin.Inference):
+            elif (self.knowledge.source[curr_k_id]==ORIGIN.Inference):
                 #Which means we have been working on a inference for a station.
                 target_station = self.inference_engine.inference_step(self.p_obs,obs)
                 self.knowledge.update_knowledge_from_inference(target_station)
@@ -132,13 +138,21 @@ class agent_adhoc(Agent):
         return proposal
 
     def act(self, proposal, decision):
+        action_probs,action = proposal
         if decision is True:
-            #If the decision was to work, then we have some bookkeeping to do.
-            _,action = proposal
+            logger.debug("Decision returned true")
+            #If the decision was to work, then we first update our knowledge that this
+            #station's work is finished.
             if action == global_defs.Actions.WORK:
+                logger.debug("Updating knowledge about status")
                 #We have been approved to work, station work is finished.
                 #Signal Knowledge that the work is finished.
                 curr_k_id = self.knowledge.get_current_job_station_id()
-                self.knowledge.
-            
-        
+                self.knowledge.set_status_complete(curr_k_id)
+            else:
+                self.pos+=global_defs.ACTIONS_TO_MOVES[action_idx)
+        else:
+            logger.debug("Decision returned False")
+            return
+
+    

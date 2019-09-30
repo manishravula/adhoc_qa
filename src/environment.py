@@ -15,6 +15,8 @@ config_env = config(1000,1,150)
 
 env_state_def = namedtuple('env_state_def','size n_stations sttn_pos is_terminal step_count config agent_state_list')
 
+
+
 class environment():
     def __init__(self,size,sttn_positions,visualize=False,config_environment=config_env):
 
@@ -57,8 +59,12 @@ class environment():
         """
         self.agents.append(adhoc_agent)
 
-
     def generate_observation(self,agent_index):
+        """
+        TODO: Change function to generate the new type of observation (see global_defs.py)
+        """
+
+        
         agent_locs = [agent.pos for agent in self.agents]
         station_locs = [pos for pos in self.sttn_pos]
         all_locs = agent_locs+station_locs
@@ -70,6 +76,7 @@ class environment():
 
     def generate_adhoc_observation(self):
         """
+        TODO: delete this, since we don't have seperate adhoc observations.
         Return AdHoc observation. For Adhoc observation, you return the environment itself and not any specific observation.
         :return:
         """
@@ -88,6 +95,7 @@ class environment():
 
     def _step_dispatch(self):
         """
+        TODO: Edit to remove the generate_adhoc_observation behavior.
         Dispatches observations and collects agents' proposals for actions.
         :return:
         """
@@ -206,7 +214,7 @@ class environment():
                     decision = False
                     return decision
 
-            #Check it isn't moving into a invalid location. Part 1: Agents
+            #Check it isn't moving into a invalid location. Part 2: Agents
             for agent in self.agents:
                 if agent.pos == action_result:
                     decision = False
@@ -218,37 +226,7 @@ class environment():
 
     def step(self):
         """
-        Performs one ste       a1 = agent_lifter.agent_lifter(agent_pos[0], 2)
-        a2 = agent_lifter.agent_lifter(agent_pos[1], 2)
-        a3 = agent_adhoc.agent_adhoc(a2.pos)
-
-        env = environment.environment(global_defs.GRID_SIZE, sttn_pos, False)
-
-        env.register_agent(a1)
-        env.register_agent(a2)
-
-        n_steps = 0
-        # print("Target Distance: {}".format(target_dist))
-        # print("Station location {}".format(station_location))
-        print("A1 {}".format(a1.pos))
-        print("A2 {}".format(a2.pos))
-        while (not env.is_terminal):
-            is_terminal, reward = env.step()
-            # ipdb.set_trace()
-            time.sleep(0.1)
-            tp_estimate = a3.respond(env)
-            print("TPESTIMATE STEP", tp_estimate, env.step_count)
-            if env.step_count == 5:
-                a1.tp = 1
-            n_steps += 1
-            # print(n_steps)
-            # print("A1 {}".format(a1.pos))
-            # print("A2 {}".format(a2.pos))
-            # if is_terminal:
-            # print("Reward {}".format(reward))
-        if is_terminal:
-            print("Terminal Reward {}".format(reward))
-            print("N_iters {}".format(n_steps))p of the simulation.
+        Performs one step
         :return:
         """
         agent_proposals,observations = self._step_dispatch()
@@ -263,12 +241,11 @@ class environment():
     def check_for_termination(self,agent_proposals,decisions):
         """
         Checks for ending criterion and sends reward.
-        
+
         Since the task is dependent on leader agent finishing the set of stations, we ought to wait until the fist agent signals completition. There is no other way to see if it is finished.
 
         """
         raise NotImplementedError
-
 
     def __copy__(self):
         selfstate = self.__getstate__()
@@ -280,7 +257,6 @@ class environment():
         for agent in self.agents:
             new_agent = agent.__copy__()
             new_env.register_agent(new_agent)
-
         new_env.__setstate__(selfstate)
         return new_env
 
@@ -310,6 +286,3 @@ class environment():
         pstr += 'curr_step: {} '.format(self.step_count)
         pstr += 'Agents: {} '.format([id(agent) for agent in self.agents])
         return pstr
-
-
-

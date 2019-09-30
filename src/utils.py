@@ -61,10 +61,12 @@ def get_valid_move_actions(pos,obstacles):
     return np.array(valid_actions)
 
 def generate_proposal(pos,destination,obstacles,desired_action=None):
-    "Given obstacles and a destination and an optional desired_action, return a proposal"
+    #Given obstacles and a destination and an optional desired_action, return a proposal
     if desired_action is None:
+        #Get path to just destination without any action preference
         (path_found,path_tuple) = get_path_astar(pos,destination,obstacles,global_defs.GRID_SIZE)
         if path_found:
+            #Move towards path
             desired_action,movement,path = path_tuple
         else:
             desired_action = np.random.choice(np.arange(5))
@@ -79,7 +81,7 @@ def generate_proposal(pos,destination,obstacles,desired_action=None):
 
     action_probs+=base_probs
     sampled_action = np.random.choice(global_defs.Actions,p=action_probs)
-    assert(np.sum(action_probs))
+    assert(np.sum(action_probs)==1)
     proposal = (action_probs,sampled_action)
     return proposal
 
@@ -88,9 +90,9 @@ def get_MAP(prior,likelihood):
     Given prior and likelihood, return the MAP index as well as the posterior distibution
     """
     pr = np.array(prior)
-    ll = np.array(likelihood) 
+    ll = np.array(likelihood)
 
-    ps = np.dot(pr*ll)
+    ps = np.dot(pr * ll)
     ps /= np.sum(ps)
 
     map_idx = np.argmax(ps)

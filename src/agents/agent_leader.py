@@ -37,8 +37,8 @@ If neighboring a station:
         Navigate to the next station. 
 
 3) Repeat until all stations are marked done.  
-
 """
+
 logger = logging.getLogger('aamas')
 logger.setLevel(global_defs.debug_level)
 
@@ -88,10 +88,10 @@ class agent_leader(agent.AbstractAgent):
             logger.debug("Agent {} executed action: {}".format(self.name,action))
             if action == global_defs.Actions.WORK:
                 #Which means we were approved to go ahead and do the work action, because the other agent had the right tool with it. It's time to move onto the next station.
-                self.tp.set_status(self.__target) #mark the station's status as done. 
+                self.tp.set_status_complete(self.__target) #mark the station's status as done. 
                 logger.debug("Agent {} finished target station id {}".format(self.name,self.__target))
         else:
-            pass
+            return
 
     def set_tp(self,tp):
         self.tp = tp
@@ -116,10 +116,7 @@ class agent_leader(agent.AbstractAgent):
         """
         This makes the agents' identical to each other. 
         """
-        
         self.tp = copy.deepcopy(new_agent.tp)
         self.pos = copy.deepcopy(new_agent.pos)
         return True
-
-        
 

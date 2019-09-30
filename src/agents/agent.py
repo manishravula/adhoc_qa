@@ -7,6 +7,7 @@ import numpy as np
 from itertools import count
 from enum import En
 
+STATUS = global_defs.status
 
 class AbstractAgent(ABC):
     _ids = count(0)
@@ -60,12 +61,11 @@ class AbstractAgent(ABC):
 class AgentType():
     "Supporting class that holds a agent's type. This will help easy sharing/comparing/constructing of new types"
     
-    status = ('Status',[('done',True),('pending',False)])
-
+    #status = ('Status',[('done',True),('pending',False)])
     def __init__(self,n_stations):
         self.n_stations = n_stations
         self.station_order = np.random.permutation(self.n_stations) #The order in which stations would be worked on.
-        self.station_work_status = np.array([status.pending]*self.n_stations) #The status of work on these stations. Everytime a station is worked on, it's work_status will be converted to True.
+        self.station_work_status = np.array([STATUS.pending] * self.n_stations) #The status of work on these stations. Everytime a station is worked on, it's work_status will be converted to True.
 
 
     def get_status(self):
@@ -77,16 +77,16 @@ class AgentType():
         """
         next_station = 0
         stn_idx = 0
-        while(self.station_work_status[std_idx] is status.done):
+        while(self.station_work_status[std_idx] == STATUS.done):
             stn_idx+=1
         return self.station_order[stn_idx]
 
-    def set_status(self,latest_station_id):
+    def set_status_complete(self,latest_station_id):
         """
         Adjust status of station's work.
         latest_station_id describes the latest station marked as done. This is the index of the station in the station_order vector. This method then marks it as True (done)
         """
-        self.station_work_status[latest_station_id] = status.done 
+        self.station_work_status[latest_station_id] = STATUS.done
         return True
         
 
@@ -100,7 +100,7 @@ class AgentType():
 
     def __copy__(self):
         new_agent_type = agent_type(self.n_stations)
-        new_agent_type.station_order = copy.deepcopy(self.station_order) 
+        new_agent_type.station_order = copy.deepcopy(self.station_order)
         new_agent_type.station_work_status = copy.deepcopy(self.station_work_status)
         return new_agent_type
 

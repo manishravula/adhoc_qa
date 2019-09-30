@@ -1,5 +1,5 @@
 import numpy as np
-from enum import IntEnum
+from enum import IntEnum, Enum
 from recordclass import recordclass
 from collections import namedtuple
 import pdb
@@ -31,6 +31,9 @@ DEBUG = False
 GRID_SIZE = 10
 MAX_ITERS = 100
 N_STATIONS = 3
+
+origin = Enum('KnowledgeSource',[('Inference',1),('Answer',2)])
+status = ('Status',[('done',True),('pending',False)])
 
 
 #An observation should have all positions, my index to get my position from all of them, station indices, and finally, the most recent actions performed by all the agents in the arena.

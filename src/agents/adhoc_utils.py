@@ -18,6 +18,11 @@ logger.setLevel(global_defs.debug_level)
 #GLOBAL DEFINTIONS ABOUT THE AGENT_LIFTER.py
 agent_adhoc_state_def = namedtuple('adhoc_state','tp name pos')
 
+
+STATUS = global_defs.status
+ORIGIN = global_defs.origin
+
+
 class inference_engine():
     """
     This class helps us do inference on the agent. Given an observation/series of observations we should be able to derive a posterior probability on the type. However, in the current setting, since we only identify the next immediate station as a part of the type and not the entire sequence, we derive posterior probabilities for just that.
@@ -32,8 +37,8 @@ class inference_engine():
     """
     def __init__(self,tracking_agent,tracking_stations):
         """
-        tracking_agent: The agent that we are tracking.
-        tracking_stations: The stations that we are considering between. Should be a list/numpy
+        tracking_agent: The agent that we are tracking/ performing inference on.
+        tracking_stations: The stations that we are considering to be possible next stations. Should be a list/numpy
         """
         self.tracking_agent = copy.deepcopy(tracking_agent)
         self.tracking_stations = copy.deepcopy(tracking_stations)
@@ -42,10 +47,9 @@ class inference_engine():
 
     def get_modified_obs(self,previous_obs,current_obs):
         """
-        When we calculate likelihood, we are looking to infer from the other agent's decision making process, which involved it being passed an obs and then performing an action. Hence, we need an obs from the previous time-step, which it used to eexecute an action at the end of the time-step (this action is a part of current_obs.allActions)
+        When we calculate likelihood, we are looking to infer from the other agent's decision making process, which involved it being passed an obs and then performing an action (see it's respond function). Hence, we need an obs from the previous time-step, which it used to execute an action at the end of the time-step (this action is a part of current_obs.allActions)
 
         Creating a modified_obs simply involves pairing theese two together
-
         """
         pobs = previous_obs
         cobs = current_obs
@@ -75,7 +79,6 @@ class inference_engine():
             dummy_tp = AgentType(1)
             dummy_tp.station_order[0] = station_id
             return dummy_tp
-
 
         for idx,sttn in enumerate(self.tracking_stations):
             dummy_tp = create_dummy_type(sttn)
@@ -109,7 +112,7 @@ class Knowledge(AgentType):
     c) station_work_status - Does anything in the history indicate whether work has been done at this station or not. If the work has been marked done, then do not bother about editing the station_order's 
     
     """
-    origin = Enum('KnowledgeSource',[('Inference',1),('Answer',2)])
+    #origin = Enum('KnowledgeSource',[('Inference',1),('Answer',2)])
 
     def __init__(self):
         super().__init__(global_defs.N_STATIONS) #Initiaize the underlying type.
@@ -127,10 +130,10 @@ class Knowledge(AgentType):
 
         returns: station_id to work on. 
         """
-
         return super().get_current_job_station()
+    
 
-    def update_knowlege_from_qa(self,station_order):
+    def update_knowlege_from_qa(self,given_station_order):
         """
         Recieve knowledge from the QA system.
 
@@ -142,13 +145,13 @@ class Knowledge(AgentType):
         #seek the current confusing station, which should be the station we are working on right now.
 
         curr_sttn_idx = 0
-        while(self.station_work_status[curr_sttn_idx] is AgentType.status.done):
+        while(self.station_work_status[curr_sttn_idx] is STATUS.done):
             curr_sttn_idx+=1
 
         #Now append the knowledge.
-        for idx in range(0,len(station_order)):
-            self.station_order[idx+curr_sttn_idx] = station_order[idx]
-            self.source[idx+curr_sttn_idx] = Knowledge.origin.Answer
+        for idx in range(0,len(given_station_order)):
+            self.station_order[idx+curr_sttn_idx] = given_station_order[idx]
+            self.source[idx+curr_sttn_idx] = ORIGIN.Answer
 
     def update_knowledge_from_inference(self,station):
         """
@@ -158,9 +161,30 @@ class Knowledge(AgentType):
 #seek the current confusing station, which should be the station we are working on right now.
 
         curr_sttn_idx = 0
-        while(self.station_work_status[curr_sttn_idx] is status.done):
+        while(self.station_work_status[curr_sttn_idx] is STATUS.done):
             curr_sttn_idx+=1
         self.station_order[curr_sttn_idx] = station
-        self.source[curr_sttn_idx] = Knowledge.origin.Inference
+        self.source[curr_sttn_idx] = ORIGIN.Inference
 
- 
+
+class QA_Engine():
+    """
+    This engine is meant to support QA part of the experiment. The idea is here to reduce the complexity involved in 
+    exchanging information through answers.
+
+    The question is going to be in n_steps and the answer is returned as a list of the stations involved in the sequence of
+    next n_steps, so that the the follower need not re-infer the stations from the sequence of the steps.
+    """
+    def __init__(self,leader_agent):
+        """
+        Make a copy of the leader agent for our private inference stuff.
+
+        """
+    def ask_question(self,n_steps):
+        """
+        Takes the question, simulates the leader's agent for the n_steps and returns the stations involved in those
+        n_steps.
+        
+        input: n_steps
+        output: list of station ids in that walk of n_steps
+        """
